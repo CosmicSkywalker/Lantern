@@ -224,10 +224,59 @@ const PEOPLE = {
   jonah:{name:'Jonah', age:39, circle:'parent', where:'Boulder, Colorado', badge:'Waldorf parent · one son, grade 3',
     colors:['#9fc0e6','#e8a77d','#d4c38f']}
 };
-const WEEK = ['ada','tomas','wren'];
+Object.assign(PEOPLE, {
+  june:{name:'June', age:38, circle:'parent', where:'Portland, Maine', badge:'Waldorf parent · one daughter, kindergarten',
+    colors:['#f2c38f','#9ec5d8','#d9a3c4'],
+    story:'Nurse, mother, and a recent convert to the bread-and-candle life. My daughter started kindergarten this fall and I cried at the first circle time. I’m ready to share the walk home with someone.',
+    festival:'The lantern walk. Small lights, cold air, everyone singing a little off key.',
+    hands:'Sourdough, mending, and a vegetable garden I’m still learning.',
+    saturday:'The beach in every season, then soup.',
+    made:'A rag doll for my daughter, with yarn hair', madeColors:['#d98c6a','#f0d9b5'],
+    values:{Screens:'Screen-free until at least seven', Land:'Small garden, big plans', Spirit:'Spiritual, not religious', Children:'Has a child; open to more', Home:'Coastal town'}},
+  miriam:{name:'Miriam', age:36, circle:'alum', where:'Berkeley, California', badge:'Waldorf alum · vouched by 3 classmates',
+    colors:['#b9a3e3','#f0b98f','#9fd0c1'],
+    story:'Waldorf from first grade through eighth. Now I’m a bookbinder and I teach handwork on weekends. I still sing the morning verse in my head on the hard days.',
+    festival:'Martinmas. Sharing the cloak.',
+    hands:'Books, paper marbling, and a tidy garden of herbs.',
+    saturday:'Coffee on the porch, then the flea market for old paper.',
+    made:'A hand-sewn journal with a marbled cover', madeColors:['#6b5aa8','#d8c3e8'],
+    values:{Screens:'Phone stays out of the bedroom', Land:'City garden, weekends in the hills', Spirit:'Jewish, and loves the festivals', Children:'Open to children', Home:'City'}},
+  eli:{name:'Eli', age:33, circle:'kindred', where:'Ithaca, New York', badge:'Kindred spirit · woodworker and teacher',
+    colors:['#a3c4e8','#c8d98f','#e8b0a0'],
+    story:'I found Waldorf through my nieces and never looked back. I build furniture, teach a little, and play cello in a very amateur string quartet.',
+    festival:'Michaelmas. Courage, then apple cider.',
+    hands:'Chairs, cello, and anything with a hand plane.',
+    saturday:'Farmers market, then the shop until the light goes.',
+    made:'A cherry rocking chair', madeColors:['#8a4b33','#d39b73'],
+    values:{Screens:'No phone before noon', Land:'Wants land someday', Spirit:'Curious about anthroposophy', Children:'Maybe someday', Home:'Small city'}},
+  sam:{name:'Sam', age:31, circle:'alum', where:'Viroqua, Wisconsin', badge:'Waldorf alum · vouched by 2 classmates',
+    colors:['#f0d38a','#a8c9a0','#c4a6dd'],
+    story:'Grew up in a Waldorf school in farm country and came back after college. I keep bees, play fiddle, and help run the school’s summer camp.',
+    festival:'St. John’s. Jumping the fire, every year.',
+    hands:'Honey, fiddle tunes, and rebuilding old bikes.',
+    saturday:'Checking the hives, then a long ride.',
+    made:'Honey from my own hives', madeColors:['#e0a530','#f7dd8b'],
+    values:{Screens:'Few screens', Land:'Rural, with bees', Spirit:'Loves the festivals', Children:'Open to children', Home:'Country'}}
+});
+const WEEK = ['ada','tomas','wren','june','miriam','eli','sam'];
+const GENDERS = ['Woman','Man'];
+const SEEKING = ['Women','Men','Everyone'];
+Object.assign(PEOPLE.ada,{gender:'Woman',seeking:'Men'}); Object.assign(PEOPLE.tomas,{gender:'Man',seeking:'Women'});
+Object.assign(PEOPLE.wren,{gender:'Woman',seeking:'Everyone'}); Object.assign(PEOPLE.lena,{gender:'Woman',seeking:'Men'});
+Object.assign(PEOPLE.jonah,{gender:'Man',seeking:'Women'}); Object.assign(PEOPLE.june,{gender:'Woman',seeking:'Men'});
+Object.assign(PEOPLE.miriam,{gender:'Woman',seeking:'Women'}); Object.assign(PEOPLE.eli,{gender:'Man',seeking:'Men'});
+Object.assign(PEOPLE.sam,{gender:'Woman',seeking:'Men'});
 const HERE = ['Dating','Dating and friendship','Friends only'];
 PEOPLE.ada.here = 'Dating'; PEOPLE.tomas.here = 'Dating and friendship'; PEOPLE.wren.here = 'Friends only';
 PEOPLE.lena.here = 'Dating'; PEOPLE.jonah.here = 'Dating and friendship';
+PEOPLE.june.here = 'Dating and friendship'; PEOPLE.miriam.here = 'Dating'; PEOPLE.eli.here = 'Dating and friendship'; PEOPLE.sam.here = 'Dating';
+const seeks = (a, b) => a.seeking === 'Everyone' || (a.seeking === 'Women' && b.gender === 'Woman') || (a.seeking === 'Men' && b.gender === 'Man');
+const forDates = h => h !== 'Friends only', forFriends = h => h !== 'Dating';
+function fits(p){
+  const me = {gender:S.me.gender, seeking:S.me.seeking || 'Everyone', here:myHere()};
+  if(forDates(me.here) && forDates(p.here) && (!me.gender || (seeks(me,p) && seeks(p,me)))) return 2;
+  return forFriends(me.here) && forFriends(p.here) ? 1 : 0;
+}
 const hereTag = p => `<span class="here">Here for: ${esc(p.here)}</span>`;
 const myHere = () => S.me.here || 'Dating and friendship';
 
@@ -300,11 +349,12 @@ function toast(msg){
 
 /* ---------- views ---------- */
 function viewWeek(){
-  const left = WEEK.filter(id => !S.passed.includes(id) && !threadFor(id));
+  const left = WEEK.filter(id => fits(PEOPLE[id]) && !S.passed.includes(id) && !threadFor(id)).sort((a,b) => fits(PEOPLE[b]) - fits(PEOPLE[a])).slice(0,3);
+  const ask = !S.me.gender ? `<div class="card"><h2>Who are you looking for?</h2><p class="muted">Tell us who you are and who you\u2019d like to meet, and introductions will fit.</p><button class="btn primary" data-act="tab" data-id="me">Set it in My story</button></div>` : '';
   const cards = left.map(id => {
     const p = PEOPLE[id];
     return `<article class="card">
-      <div class="card-head">${avatar(p,64)}<div class="who"><span class="name">${esc(p.name)}, ${p.age}</span><span class="where">${esc(p.where)}</span></div></div>
+      <div class="card-head">${avatar(p,64)}<div class="who"><span class="name">${esc(p.name)}, ${p.age}</span><span class="where">${esc(p.gender)} \u00b7 ${esc(p.where)}</span></div></div>
       <div class="tags">${badge(p)}${hereTag(p)}</div>
       <p class="quote">${esc(p.story.split('. ')[0])}.</p>
       <button class="btn ghost" data-act="open" data-id="${id}">Read ${esc(p.name)}’s story</button>
@@ -316,7 +366,7 @@ function viewWeek(){
       <h1>${left.length ? (left.length === 1 ? 'One light' : ['','','Two lights','Three lights'][left.length]) + ' for you' : 'That’s everyone this week'}</h1>
     </section>
     <div class="countdown">${LANTERN_SVG.replace('big-lantern','').replace('class=""','style="width:18px;height:24px;flex:none"')}<span>New introductions arrive Sunday evening. Next lighting in <b>${countdown()}</b>.</span></div>
-    ${left.length ? cards : `<div class="empty"><h2>Rest a while</h2><p class="muted">You’ve read every story this week. Your letters are on their way. New people arrive on Sunday.</p><button class="btn ghost" data-act="tab" data-id="letters">See your letters</button><button class="btn quiet" data-act="reset-week">Bring this week’s people back (prototype)</button></div>`}
+    ${ask}${left.length ? cards : `<div class="empty"><h2>Rest a while</h2><p class="muted">You’ve read every story this week. Your letters are on their way. New people arrive on Sunday.</p><button class="btn ghost" data-act="tab" data-id="letters">See your letters</button><button class="btn quiet" data-act="reset-week">Bring this week’s people back (prototype)</button></div>`}
   </div>`;
 }
 
@@ -325,7 +375,7 @@ function viewProfile(){
   const vals = Object.entries(p.values).map(([k,v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('');
   return `<div class="stack">
     <button class="back" data-act="tab" data-id="week">‹ This week</button>
-    <section class="hero">${avatar(p,120)}<h1>${esc(p.name)}, ${p.age}</h1><span class="where">${esc(p.where)}</span><div class="tags" style="justify-content:center">${badge(p)}${hereTag(p)}</div></section>
+    <section class="hero">${avatar(p,120)}<h1>${esc(p.name)}, ${p.age}</h1><span class="where">${esc(p.gender)} \u00b7 ${esc(p.where)}</span><div class="tags" style="justify-content:center">${badge(p)}${hereTag(p)}</div></section>
     <p class="note" style="text-align:center">Photos come into view as you read. In this prototype, watercolor stands in for them.</p>
     <div>
       <div class="facet"><h3>My story</h3><p>${esc(p.story)}</p></div>
@@ -419,7 +469,8 @@ function viewMe(){
     ${f('festival','The festival I love most','Michaelmas, Martinmas, the lantern walk, the Advent spiral…')}
     ${f('hands','What my hands like to make','Bread, furniture, music, a garden…')}
     ${f('saturday','A Saturday morning','Describe one.')}
-    <div class="field"><label for="f-seeking">I’d like to meet</label><select id="f-seeking" data-me="seeking">${['Women','Men','Everyone'].map(o => `<option ${m.seeking===o?'selected':''}>${o}</option>`).join('')}</select></div>
+    <div class="field"><label for="f-gender">I am</label><select id="f-gender" data-me="gender"><option value="" ${!m.gender?'selected':''}>Choose one</option>${GENDERS.map(o => `<option ${m.gender===o?'selected':''}>${o}</option>`).join('')}</select></div>
+    <div class="field"><label for="f-seeking">For dating, I\u2019d like to meet</label><select id="f-seeking" data-me="seeking">${SEEKING.map(o => `<option ${m.seeking===o?'selected':''}>${o}</option>`).join('')}</select><span class="note">Friendship introductions can be anyone.</span></div>
     <div>
       ${sw('hideSchool','Hide me from my own school','People tied to your school community won’t see your profile.')}
     </div>
@@ -431,7 +482,7 @@ function viewMe(){
 
 function viewOnboard(){
   const step = S.onboard;
-  const dots = `<div class="steps">${[0,1,2,3].map(i => `<i class="${i===step?'on':''}"></i>`).join('')}</div>`;
+  const dots = `<div class="steps">${[0,1,2,3,4].map(i => `<i class="${i===step?'on':''}"></i>`).join('')}</div>`;
   let body, foot;
   if(step === 0){
     body = `${LANTERN_SVG}<div class="title">Lantern</div><p class="lead">Light the way.<br>Walk each other home.</p><p class="muted" style="text-align:center">A slow dating community inspired by Waldorf education, for alumni, parents and kindred spirits.</p>`;
@@ -445,6 +496,12 @@ function viewOnboard(){
     body = `<h1>What are you here for?</h1><p class="muted">It shows on your profile, so no one has to guess. You can change it any time.</p>
       ${HERE.map(h => `<button class="option" aria-pressed="${myHere()===h}" data-act="here" data-id="${h}"><b>${h}</b><span class="muted">${desc[h]}</span></button>`).join('')}`;
     foot = `<button class="btn primary" data-act="ob-next">Continue</button>`;
+  } else if(step === 3){
+    const lbl = t => `<span style="font-size:13px;font-weight:600;color:var(--muted)">${t}</span>`;
+    const seekPart = myHere() === 'Friends only' ? '' : lbl('For dating, I\u2019d like to meet') + `<div class="chips">${SEEKING.map(o => `<button class="chip" aria-pressed="${S.me.seeking===o}" data-act="seek" data-id="${o}">${o}</button>`).join('')}</div>`;
+    body = `<h1>About you</h1><p class="muted">So introductions fit both ways. Friendship introductions can be anyone.</p>
+      ${lbl('I am')}<div class="chips">${GENDERS.map(o => `<button class="chip" aria-pressed="${S.me.gender===o}" data-act="gender" data-id="${o}">${o}</button>`).join('')}</div>${seekPart}`;
+    foot = `<button class="btn primary" data-act="ob-next" ${S.me.gender ? '' : 'disabled'}>Continue</button>`;
   } else {
     body = `<h1>How Lantern works</h1>
       <div class="how"><span class="n">1</span><span><b>A few introductions, once a week.</b><br><span class="muted">They arrive Sunday evening. No endless swiping.</span></span></div>
@@ -452,7 +509,7 @@ function viewOnboard(){
       <div class="how"><span class="n">3</span><span><b>Gatherings in person.</b><br><span class="muted">Lantern walks, festivals, bread afternoons. Meet where the community already meets.</span></span></div>`;
     foot = `<button class="btn primary" data-act="ob-done">Light my lantern</button>`;
   }
-  return `<div class="onboard" role="dialog" aria-label="Welcome to Lantern">${dots}<div class="body">${body}</div><div class="foot">${foot}${step<3?'<button class="btn quiet" data-act="ob-done">Skip</button>':''}</div></div>`;
+  return `<div class="onboard" role="dialog" aria-label="Welcome to Lantern">${dots}<div class="body">${body}</div><div class="foot">${foot}${step<4?'<button class="btn quiet" data-act="ob-done">Skip</button>':''}</div></div>`;
 }
 
 /* ---------- render ---------- */
@@ -509,6 +566,8 @@ const ACT = {
   going: id => { const i = S.going.indexOf(id); i >= 0 ? S.going.splice(i,1) : S.going.push(id); save(); render(); },
   circle: id => { const i = S.circles.indexOf(id); i >= 0 ? S.circles.splice(i,1) : S.circles.push(id); save(); render(); },
   here: id => { S.me.here = id; save(); render(); },
+  gender: id => { S.me.gender = id; save(); render(); },
+  seek: id => { S.me.seeking = id; save(); render(); },
   'switch': id => { S.me[id] = !S.me[id]; save(); render(); },
   'save-me': () => { save(); toast('Saved on this device.'); },
   replay: () => { S.onboarded = false; S.onboard = 0; render(); },
@@ -525,7 +584,7 @@ document.addEventListener('input', e => {
   if(e.target.id === 'letter'){ S.draft = e.target.value; updateCounter(); }
   if(e.target.dataset.me){ S.me[e.target.dataset.me] = e.target.value; }
 });
-document.addEventListener('change', e => { if(e.target.dataset.me){ S.me[e.target.dataset.me] = e.target.value; save(); } });
+document.addEventListener('change', e => { if(e.target.dataset.me){ S.me[e.target.dataset.me] = e.target.value; save(); if(e.target.tagName === 'SELECT') render(); } });
 setInterval(() => { if(S.view === 'week' && S.onboarded){ const b = document.querySelector('.countdown b'); if(b) b.textContent = countdown(); } }, 30000);
 
 load(); render();
