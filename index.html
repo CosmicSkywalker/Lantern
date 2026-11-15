@@ -434,7 +434,7 @@ function viewOnboard(){
   const dots = `<div class="steps">${[0,1,2,3].map(i => `<i class="${i===step?'on':''}"></i>`).join('')}</div>`;
   let body, foot;
   if(step === 0){
-    body = `${LANTERN_SVG}<div class="title">Lantern</div><p class="lead">Each of us carries a little light.<br>Find the ones who walk beside you.</p><p class="muted" style="text-align:center">A slow dating community inspired by Waldorf education, for alumni, parents and kindred spirits.</p>`;
+    body = `${LANTERN_SVG}<div class="title">Lantern</div><p class="lead">Light the way.<br>Walk each other home.</p><p class="muted" style="text-align:center">A slow dating community inspired by Waldorf education, for alumni, parents and kindred spirits.</p>`;
     foot = `<button class="btn primary" data-act="ob-next">Begin</button>`;
   } else if(step === 1){
     body = `<h1>Which circle are you in?</h1><p class="muted">Choose any that fit. Your circle shows as a badge on your profile. It never divides who you meet: everyone gathers at the same fire.</p>
