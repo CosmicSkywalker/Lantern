@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lantern Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gloock&family=Figtree:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Layout: a phone-width app shell. A lantern walk at dusk: indigo night, amber glow, plant-dye accents. Letters sit on paper. */
+  --night:#171b38;
+  --night-2:#222950;
+  --night-3:#2d3563;
+  --line:rgba(233,226,255,.13);
+  --text:#f4eee3;
+  --muted:#aeb0cf;
+  --glow:#f3b65b;
+  --glow-soft:rgba(243,182,91,.15);
+  --rose:#e8968c;
+  --moss:#9cc39a;
+  --paper:#f5efe3;
+  --ink:#2a2b40;
+  --display:"Gloock", Georgia, "Times New Roman", serif;
+  --body:"Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--night);color:var(--text);font-family:var(--body);font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--glow);outline-offset:2px;border-radius:8px}
+h1,h2,h3{font-family:var(--display);font-weight:400;margin:0;text-wrap:balance;letter-spacing:.005em}
+h1{font-size:30px;line-height:1.15}
+h2{font-size:22px;line-height:1.2}
+p{margin:0}
+.muted{color:var(--muted)}
+.eyebrow{font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--glow)}
+
+.app{max-width:480px;margin:0 auto;height:100%;display:flex;flex-direction:column;position:relative;overflow:hidden;
+  background:radial-gradient(120% 55% at 50% -12%, #2f3876 0%, var(--night) 62%)}
+header.top{display:flex;align-items:center;justify-content:space-between;padding:calc(env(safe-area-inset-top) + 14px) 20px 8px}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--display);font-size:26px}
+.brand svg{width:22px;height:28px}
+.pill{font-size:12px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:3px 10px;white-space:nowrap}
+main{flex:1;overflow-y:auto;padding:6px 20px 28px;-webkit-overflow-scrolling:touch}
+.stack{display:flex;flex-direction:column;gap:16px}
+
+nav.tabs{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--line);background:rgba(23,27,56,.94);padding:6px 6px calc(env(safe-area-inset-bottom) + 6px)}
+nav.tabs button{background:none;border:0;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 2px;font-size:11.5px;color:var(--muted);position:relative}
+nav.tabs button svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+nav.tabs button[aria-current="page"]{color:var(--glow)}
+.dot{position:absolute;top:4px;right:calc(50% - 16px);width:8px;height:8px;border-radius:50%;background:var(--rose)}
+
+/* avatars painted wet-on-wet */
+.av{flex:none;border-radius:50%;display:grid;place-items:center;font-family:var(--display);color:rgba(23,27,56,.75);
+  background:
+    radial-gradient(circle at 30% 28%, var(--a) 0, transparent 58%),
+    radial-gradient(circle at 74% 62%, var(--b) 0, transparent 56%),
+    radial-gradient(circle at 36% 82%, var(--c) 0, transparent 60%),
+    #e9dccb;
+  box-shadow:0 0 0 3px rgba(243,182,91,.18)}
+
+.card{background:var(--night-2);border:1px solid var(--line);border-radius:20px;padding:18px;display:flex;flex-direction:column;gap:14px}
+.card-head{display:flex;gap:14px;align-items:center}
+.card-head .who{display:flex;flex-direction:column;gap:2px;min-width:0}
+.name{font-family:var(--display);font-size:22px;line-height:1.1}
+.where{font-size:14px;color:var(--muted)}
+.badge{align-self:flex-start;font-size:12.5px;font-weight:600;border-radius:999px;padding:3px 10px;background:var(--glow-soft);color:var(--glow)}
+.badge.parent{background:rgba(232,150,140,.15);color:var(--rose)}
+.badge.kindred{background:rgba(156,195,154,.15);color:var(--moss)}
+.quote{font-size:15.5px;color:#e3ddd3}
+.tags{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.here{font-size:12.5px;font-weight:600;border-radius:999px;padding:2px 10px;border:1px solid var(--line);color:var(--text)}
+
+.btn{border:0;border-radius:14px;padding:13px 18px;font-weight:600;font-size:15.5px;display:inline-flex;justify-content:center;align-items:center;gap:8px}
+.btn.primary{background:var(--glow);color:#22180a}
+.btn.primary:disabled{opacity:.4;cursor:not-allowed}
+.btn.ghost{background:transparent;border:1px solid var(--line);color:var(--text)}
+.btn.quiet{background:transparent;color:var(--muted);padding:10px 4px}
+.row{display:flex;gap:10px}
+.row > .btn{flex:1}
+.back{background:none;border:0;color:var(--muted);display:inline-flex;align-items:center;gap:6px;padding:6px 0;font-size:15px}
+
+.week-head{display:flex;flex-direction:column;gap:8px;padding:6px 0 4px}
+.countdown{display:flex;align-items:center;gap:12px;background:var(--glow-soft);border:1px solid rgba(243,182,91,.25);border-radius:16px;padding:12px 14px;font-size:14.5px}
+.countdown b{color:var(--glow);font-variant-numeric:tabular-nums}
+.empty{text-align:center;padding:36px 12px;display:flex;flex-direction:column;gap:10px;align-items:center}
+
+/* profile */
+.hero{display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;padding:8px 0 4px}
+.facet{display:flex;flex-direction:column;gap:6px;padding:16px 0;border-top:1px solid var(--line)}
+.facet h3{font-family:var(--body);font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.facet p{font-size:16px}
+.made{display:flex;gap:14px;align-items:center}
+.swatch{width:64px;height:64px;border-radius:14px;flex:none;background:linear-gradient(135deg,var(--a),var(--b))}
+dl.values{display:grid;grid-template-columns:auto 1fr;gap:8px 16px;margin:0;font-size:15px}
+dl.values dt{color:var(--muted)}
+dl.values dd{margin:0}
+.sticky-actions{position:sticky;bottom:-28px;padding:14px 0 18px;background:linear-gradient(transparent,var(--night) 30%);display:flex;flex-direction:column;gap:6px}
+.note{font-size:13px;color:var(--muted)}
+
+/* letters */
+.thread-item{display:flex;gap:14px;align-items:center;background:var(--night-2);border:1px solid var(--line);border-radius:18px;padding:14px;text-align:left;width:100%}
+.thread-item .who{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.status{align-self:flex-start;font-size:12px;font-weight:600;border-radius:999px;padding:2px 9px}
+.status.open{background:rgba(156,195,154,.16);color:var(--moss)}
+.status.waiting{background:var(--glow-soft);color:var(--glow)}
+.status.incoming{background:rgba(232,150,140,.17);color:var(--rose)}
+.letter{background:var(--paper);color:var(--ink);border-radius:6px 18px 18px 18px;padding:18px 18px 16px;box-shadow:0 8px 24px rgba(0,0,0,.25);display:flex;flex-direction:column;gap:10px}
+.letter.mine{border-radius:18px 6px 18px 18px;background:#ece6f5}
+.letter .sig{font-family:var(--display);font-size:17px}
+.letter p{font-size:15.5px;white-space:pre-wrap}
+.divider{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--moss)}
+.divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--line)}
+.bubbles{display:flex;flex-direction:column;gap:8px}
+.bubble{max-width:82%;padding:10px 14px;border-radius:18px;font-size:15.5px;background:var(--night-3)}
+.bubble.mine{align-self:flex-end;background:var(--glow);color:#22180a}
+.chatbar{display:flex;gap:8px;position:sticky;bottom:-28px;padding:12px 0 18px;background:var(--night)}
+.chatbar input{flex:1;min-width:0;background:var(--night-2);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+
+textarea,.field input,.field select{width:100%;background:var(--night-2);border:1px solid var(--line);border-radius:14px;padding:14px;resize:vertical;line-height:1.5}
+textarea.paper{background:var(--paper);color:var(--ink);border:0;min-height:240px;font-size:16px}
+.counter{font-size:13.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.counter.ok{color:var(--moss)}
+
+/* gatherings */
+.gather{display:grid;grid-template-columns:62px 1fr;gap:14px;background:var(--night-2);border:1px solid var(--line);border-radius:18px;padding:14px}
+.date{background:var(--night-3);border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 0;height:68px}
+.date .m{font-size:11.5px;font-weight:700;letter-spacing:.1em;color:var(--glow)}
+.date .d{font-family:var(--display);font-size:26px;line-height:1}
+.gather .info{display:flex;flex-direction:column;gap:6px;min-width:0}
+.gather .meta{font-size:13.5px;color:var(--muted)}
+.going{align-self:flex-start;border:1px solid var(--line);background:transparent;border-radius:999px;padding:6px 12px;font-size:13.5px;font-weight:600}
+.going[aria-pressed="true"]{background:var(--moss);border-color:var(--moss);color:#13210f}
+
+/* my story */
+.field{display:flex;flex-direction:column;gap:6px}
+.field label,.field .lbl{font-size:13px;font-weight:600;color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--line);background:transparent;border-radius:999px;padding:8px 14px;font-size:14.5px}
+.chip[aria-pressed="true"]{background:var(--glow-soft);border-color:rgba(243,182,91,.5);color:var(--glow)}
+.toggle{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:14px 0;border-top:1px solid var(--line)}
+.toggle span{display:flex;flex-direction:column;gap:2px}
+.toggle small{color:var(--muted);font-size:13.5px}
+.switch{flex:none;width:50px;height:30px;border-radius:999px;border:0;background:var(--night-3);position:relative;transition:background .2s}
+.switch::after{content:"";position:absolute;top:4px;left:4px;width:22px;height:22px;border-radius:50%;background:var(--text);transition:transform .2s}
+.switch[aria-checked="true"]{background:var(--moss)}
+.switch[aria-checked="true"]::after{transform:translateX(20px)}
+
+/* onboarding */
+.onboard{position:absolute;inset:0;z-index:20;background:radial-gradient(90% 50% at 50% 30%, #3a3f7a 0%, var(--night) 70%);display:flex;flex-direction:column;padding:calc(env(safe-area-inset-top) + 24px) 24px calc(env(safe-area-inset-bottom) + 24px);overflow-y:auto}
+.onboard .body{flex:1;display:flex;flex-direction:column;justify-content:center;gap:18px}
+.onboard .big-lantern{width:88px;height:112px;align-self:center;filter:drop-shadow(0 0 28px rgba(243,182,91,.55))}
+.onboard .title{font-family:var(--display);font-size:46px;text-align:center;line-height:1}
+.onboard .lead{text-align:center;font-size:18px}
+.option{display:flex;flex-direction:column;gap:4px;text-align:left;width:100%;background:var(--night-2);border:1px solid var(--line);border-radius:18px;padding:16px}
+.option b{font-family:var(--display);font-weight:400;font-size:20px}
+.option[aria-pressed="true"]{border-color:var(--glow);background:#2b2f55;box-shadow:0 0 0 3px var(--glow-soft)}
+.how{display:flex;gap:14px;align-items:flex-start}
+.how .n{flex:none;width:34px;height:34px;border-radius:50%;background:var(--glow-soft);color:var(--glow);display:grid;place-items:center;font-family:var(--display);font-size:18px}
+.steps{display:flex;gap:6px;justify-content:center;padding-bottom:10px}
+.steps i{width:7px;height:7px;border-radius:50%;background:var(--night-3)}
+.steps i.on{background:var(--glow)}
+.onboard .foot{display:flex;flex-direction:column;gap:6px}
+
+.toast{position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom) + 82px);transform:translate(-50%,20px);opacity:0;background:var(--paper);color:var(--ink);padding:12px 16px;border-radius:14px;font-size:14.5px;width:calc(100% - 40px);max-width:420px;box-shadow:0 10px 30px rgba(0,0,0,.35);transition:opacity .25s, transform .25s;pointer-events:none;z-index:30}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+@media (prefers-reduced-motion: reduce){*{transition:none !important;animation:none !important}}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <header class="top">
+    <div class="brand">
+      <svg viewBox="0 0 22 28" aria-hidden="true"><path d="M11 1v3" stroke="#f3b65b" stroke-width="1.6" stroke-linecap="round"/><path d="M5 6h12l2 4v10l-3 4H6l-3-4V10z" fill="rgba(243,182,91,.22)" stroke="#f3b65b" stroke-width="1.4" stroke-linejoin="round"/><ellipse cx="11" cy="15" rx="3" ry="4.2" fill="#f3b65b"/></svg>
+      Lantern
+    </div>
+    <span class="pill">Prototype · sample people</span>
+  </header>
+  <main id="main"></main>
+  <nav class="tabs" id="tabs" aria-label="Sections"></nav>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+</div>
+
+<script>
+const LANTERN_SVG = '<svg class="big-lantern" viewBox="0 0 22 28" aria-hidden="true"><path d="M11 1v3" stroke="#f3b65b" stroke-width="1.2" stroke-linecap="round"/><path d="M5 6h12l2 4v10l-3 4H6l-3-4V10z" fill="rgba(243,182,91,.25)" stroke="#f3b65b" stroke-width="1" stroke-linejoin="round"/><ellipse cx="11" cy="15" rx="3" ry="4.2" fill="#f7c97e"/></svg>';
+
+const CIRCLES = {
+  alum:{label:'Waldorf alum', cls:'', desc:'You went to a Waldorf or Steiner school.'},
+  parent:{label:'Waldorf parent', cls:'parent', desc:'Your children are part of a Waldorf school community.'},
+  kindred:{label:'Kindred spirit', cls:'kindred', desc:'You’re drawn to the rhythm, the festivals, the land and the handwork.'}
+};
+
+const PEOPLE = {
+  ada:{name:'Ada', age:34, circle:'alum', where:'Hudson Valley, New York', badge:'Waldorf alum · vouched by 2 classmates',
+    colors:['#e7a59a','#9fb7d9','#f1cf8a'],
+    story:'I went to a Waldorf school from kindergarten through twelfth grade, and I still knit through meetings. Nobody at work understands why. These days I teach music to little ones and keep a garden that is much too big for one person.',
+    festival:'Michaelmas. Facing the dragon, then eating bread shaped like one.',
+    hands:'Knitting, spinning, and slowly learning the lyre.',
+    saturday:'The market at eight, then a long walk with whoever wants to come.',
+    made:'A sweater dyed with black walnut hulls', madeColors:['#7a5a3f','#c49a6c'],
+    values:{Screens:'Few screens; none for small children', Land:'Grows some of her own food', Spirit:'Loves the festivals; reading Steiner slowly', Children:'Wants children', Home:'Small town or country'}},
+  tomas:{name:'Tomás', age:41, circle:'parent', where:'Asheville, North Carolina', badge:'Waldorf parent · two kids, grades 2 and 5',
+    colors:['#c9a7e0','#e9b27a','#a3c9b0'],
+    story:'Single dad, woodworker, and the guy who builds the stage for every class play. My kids taught me more about rhythm than any book did. I’m looking for someone to share the long table with.',
+    festival:'The Advent spiral. The quiet in that room gets me every year.',
+    hands:'Furniture, spoons, and a canoe that is taking forever.',
+    saturday:'Pancakes, then the workshop with two small helpers.',
+    made:'A walnut stool for my daughter’s classroom', madeColors:['#5b3b28','#a86f45'],
+    values:{Screens:'No TV at home; phones away at dinner', Land:'Woods behind the house', Spirit:'Quietly Christian', Children:'Has children; open to more', Home:'Edge of town'}},
+  wren:{name:'Wren', age:29, circle:'kindred', where:'Western Massachusetts', badge:'Kindred spirit · biodynamic farmer',
+    colors:['#a6cf98','#f3c97b','#e59f9f'],
+    story:'I didn’t go to a Waldorf school. I found all of it later, working on a biodynamic farm, and it felt like remembering something. Cows, compost, and a choir on Thursday nights.',
+    festival:'St. John’s. A fire on the longest day of the year.',
+    hands:'Cheese, beeswax candles, and harmonies.',
+    saturday:'Milking at five. After that, anything.',
+    made:'Beeswax candles, rolled by hand', madeColors:['#e9b949','#f6dc8c'],
+    values:{Screens:'Phone mostly lives in a drawer', Land:'Lives on the land she farms', Spirit:'Spiritual; exploring anthroposophy', Children:'Open to children', Home:'Country'}},
+  lena:{name:'Lena', age:37, circle:'alum', where:'Monadnock Region, New Hampshire', badge:'Waldorf alum · vouched by 1 classmate',
+    colors:['#f0b48c','#b5a6de','#9cc3c0']},
+  jonah:{name:'Jonah', age:39, circle:'parent', where:'Boulder, Colorado', badge:'Waldorf parent · one son, grade 3',
+    colors:['#9fc0e6','#e8a77d','#d4c38f']}
+};
+const WEEK = ['ada','tomas','wren'];
+const HERE = ['Dating','Dating and friendship','Friends only'];
+PEOPLE.ada.here = 'Dating'; PEOPLE.tomas.here = 'Dating and friendship'; PEOPLE.wren.here = 'Friends only';
+PEOPLE.lena.here = 'Dating'; PEOPLE.jonah.here = 'Dating and friendship';
+const hereTag = p => `<span class="here">Here for: ${esc(p.here)}</span>`;
+const myHere = () => S.me.here || 'Dating and friendship';
+
+const GATHERINGS = [
+  {id:'g1', m:'NOV', d:'21', when:'Sat 4:30 pm', title:'Lantern walk and soup supper', where:'Peterborough, New Hampshire', blurb:'Bring a lantern. We walk the trail at dusk, then share soup by the fire.', count:14},
+  {id:'g2', m:'NOV', d:'29', when:'Sun 3:00 pm', title:'Advent garden spiral', where:'Hudson Valley, New York', blurb:'A quiet walk into the spiral of greens, one candle at a time.', count:22},
+  {id:'g3', m:'DEC', d:'5', when:'Sat 1:00 pm', title:'Bread and beeswax afternoon', where:'Western Massachusetts', blurb:'Braid a loaf, roll a candle, meet a few people without any pressure.', count:9},
+  {id:'g4', m:'DEC', d:'13', when:'Sun 8:00 am', title:'Santa Lucia songs, on video', where:'Online, from your kitchen', blurb:'Saffron buns and morning songs together. Cameras optional.', count:31}
+];
+
+let threads = [
+  {id:'t-lena', pid:'lena',
+    letters:[
+      {from:'them', text:'Your line about beeswax crayons made me laugh out loud. I still have a tin of them in my desk drawer, worn down to nubs. I went to school in a little white farmhouse and we did main lesson by the woodstove. What do you remember most from yours?'},
+      {from:'me', text:'The smell of the wax, and wet-on-wet painting on Wednesdays. I remember the colors running into each other and nobody telling us it was wrong. I think about that more than you’d expect.'}
+    ],
+    chat:[
+      {from:'them', text:'Are you going to the lantern walk on the 21st?'},
+      {from:'me', text:'I am. Look for the slightly lopsided paper star. My daughter made it.'}
+    ]},
+  {id:'t-jonah', pid:'jonah',
+    letters:[
+      {from:'them', text:'Hi. I read that you love the lantern walk. Our school’s is next week and my son has been practicing the songs at breakfast, at full volume. I teach high school chemistry and I’m slowly learning to bake bread that doesn’t collapse. What’s the one festival you’d never miss?'}
+    ], chat:[]}
+];
+
+const S = {view:'week', pid:null, tid:null, passed:[], going:[], circles:['alum'], onboard:0, onboarded:false,
+  me:{name:'', story:'', festival:'', hands:'', saturday:'', seeking:'Everyone', hideSchool:true, friendship:false}};
+const KEY = 'lantern-prototype-v1';
+
+function load(){
+  try{
+    const raw = localStorage.getItem(KEY); if(!raw) return;
+    const d = JSON.parse(raw);
+    Object.assign(S, d.S || {}); if(d.threads) threads = d.threads;
+    S.view = 'week';
+  }catch(e){}
+}
+function save(){
+  try{ localStorage.setItem(KEY, JSON.stringify({S:{passed:S.passed,going:S.going,circles:S.circles,onboarded:S.onboarded,me:S.me}, threads})); }catch(e){}
+}
+
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const avatar = (p, size) => `<div class="av" style="--a:${p.colors[0]};--b:${p.colors[1]};--c:${p.colors[2]};width:${size}px;height:${size}px;font-size:${Math.round(size*.42)}px" aria-hidden="true">${esc(p.name[0])}</div>`;
+const badge = p => `<span class="badge ${CIRCLES[p.circle].cls}">${esc(p.badge)}</span>`;
+const threadFor = pid => threads.find(t => t.pid === pid);
+function status(t){
+  const mine = t.letters.some(l => l.from === 'me'), theirs = t.letters.some(l => l.from === 'them');
+  if(mine && theirs) return {k:'open', label:'Conversation open'};
+  if(mine) return {k:'waiting', label:'Waiting for their letter'};
+  return {k:'incoming', label:'A letter for you'};
+}
+
+function nextSunday(){
+  const n = new Date(), d = new Date(n); d.setHours(18,0,0,0);
+  let add = (7 - n.getDay()) % 7; if(add === 0 && n >= d) add = 7;
+  d.setDate(d.getDate() + add); return d;
+}
+function countdown(){
+  const ms = nextSunday() - new Date();
+  const days = Math.floor(ms/864e5), hrs = Math.floor(ms % 864e5 / 36e5), mins = Math.floor(ms % 36e5 / 6e4);
+  return days > 0 ? `${days} day${days>1?'s':''}, ${hrs} hr` : `${hrs} hr ${mins} min`;
+}
+
+let toastTimer;
+function toast(msg){
+  const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 3200);
+}
+
+/* ---------- views ---------- */
+function viewWeek(){
+  const left = WEEK.filter(id => !S.passed.includes(id) && !threadFor(id));
+  const cards = left.map(id => {
+    const p = PEOPLE[id];
+    return `<article class="card">
+      <div class="card-head">${avatar(p,64)}<div class="who"><span class="name">${esc(p.name)}, ${p.age}</span><span class="where">${esc(p.where)}</span></div></div>
+      <div class="tags">${badge(p)}${hereTag(p)}</div>
+      <p class="quote">${esc(p.story.split('. ')[0])}.</p>
+      <button class="btn ghost" data-act="open" data-id="${id}">Read ${esc(p.name)}’s story</button>
+    </article>`;
+  }).join('');
+  return `<div class="stack">
+    <section class="week-head">
+      <p class="eyebrow">This week’s introductions</p>
+      <h1>${left.length ? (left.length === 1 ? 'One light' : ['','','Two lights','Three lights'][left.length]) + ' for you' : 'That’s everyone this week'}</h1>
+    </section>
+    <div class="countdown">${LANTERN_SVG.replace('big-lantern','').replace('class=""','style="width:18px;height:24px;flex:none"')}<span>New introductions arrive Sunday evening. Next lighting in <b>${countdown()}</b>.</span></div>
+    ${left.length ? cards : `<div class="empty"><h2>Rest a while</h2><p class="muted">You’ve read every story this week. Your letters are on their way. New people arrive on Sunday.</p><button class="btn ghost" data-act="tab" data-id="letters">See your letters</button><button class="btn quiet" data-act="reset-week">Bring this week’s people back (prototype)</button></div>`}
+  </div>`;
+}
+
+function viewProfile(){
+  const p = PEOPLE[S.pid];
+  const vals = Object.entries(p.values).map(([k,v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('');
+  return `<div class="stack">
+    <button class="back" data-act="tab" data-id="week">‹ This week</button>
+    <section class="hero">${avatar(p,120)}<h1>${esc(p.name)}, ${p.age}</h1><span class="where">${esc(p.where)}</span><div class="tags" style="justify-content:center">${badge(p)}${hereTag(p)}</div></section>
+    <p class="note" style="text-align:center">Photos come into view as you read. In this prototype, watercolor stands in for them.</p>
+    <div>
+      <div class="facet"><h3>My story</h3><p>${esc(p.story)}</p></div>
+      <div class="facet"><h3>The festival I love most</h3><p>${esc(p.festival)}</p></div>
+      <div class="facet"><h3>What my hands like to make</h3><p>${esc(p.hands)}</p></div>
+      <div class="facet"><h3>A Saturday morning</h3><p>${esc(p.saturday)}</p></div>
+      <div class="facet"><h3>Something I made</h3><div class="made"><div class="swatch" style="--a:${p.madeColors[0]};--b:${p.madeColors[1]}"></div><p>${esc(p.made)}</p></div></div>
+      <div class="facet"><h3>What matters</h3><dl class="values">${vals}</dl></div>
+    </div>
+    <div class="sticky-actions">
+      <button class="btn primary" data-act="compose" data-id="${S.pid}">Write ${esc(p.name)} a letter</button>
+      <button class="btn quiet" data-act="pass" data-id="${S.pid}">Let pass</button>
+    </div>
+  </div>`;
+}
+
+function viewCompose(){
+  const p = PEOPLE[S.pid];
+  return `<div class="stack">
+    <button class="back" data-act="open" data-id="${S.pid}">‹ ${esc(p.name)}’s story</button>
+    <div class="card-head">${avatar(p,48)}<div class="who"><h2>${p.here === 'Friends only' ? 'A letter of friendship to' : 'A letter to'} ${esc(p.name)}</h2><span class="where">Write the way you would on paper.</span></div></div>
+    <p class="muted">What in ${esc(p.name)}’s story stayed with you? Once you’ve both written a letter, the conversation opens.</p>
+    <label for="letter" class="note">Your letter</label>
+    <textarea id="letter" class="paper" placeholder="Dear ${esc(p.name)},">${esc(S.draft || '')}</textarea>
+    <span class="counter" id="counter"></span>
+    <button class="btn primary" id="send" data-act="send" data-id="${S.pid}" disabled>Send letter</button>
+  </div>`;
+}
+
+function viewLetters(){
+  const items = threads.map(t => {
+    const p = PEOPLE[t.pid], st = status(t);
+    const last = t.chat.length ? t.chat[t.chat.length-1].text : t.letters[t.letters.length-1].text;
+    return `<button class="thread-item" data-act="thread" data-id="${t.id}">${avatar(p,52)}<span class="who"><span class="name" style="font-size:19px">${esc(p.name)}</span><span class="status ${st.k}">${st.label}</span><span class="where" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(last)}</span></span></button>`;
+  }).join('');
+  return `<div class="stack">
+    <section class="week-head"><p class="eyebrow">Letters</p><h1>Slow words first</h1><p class="muted">Every connection begins with one letter each. After that, talk freely.</p></section>
+    ${items || '<p class="muted">No letters yet. Start with someone from this week.</p>'}
+  </div>`;
+}
+
+function viewThread(){
+  const t = threads.find(x => x.id === S.tid), p = PEOPLE[t.pid], st = status(t);
+  const letters = t.letters.map(l => `<div class="letter ${l.from==='me'?'mine':''}"><span class="sig">${l.from==='me' ? 'From you' : 'From ' + esc(p.name)}</span><p>${esc(l.text)}</p></div>`).join('');
+  let tail = '';
+  if(st.k === 'open'){
+    tail = `<div class="divider">Your letters crossed. Talk freely.</div>
+      <div class="bubbles">${t.chat.map(m => `<div class="bubble ${m.from==='me'?'mine':''}">${esc(m.text)}</div>`).join('')}</div>
+      <form class="chatbar" id="chatform"><label for="chat" class="note" style="position:absolute;left:-9999px">Message</label><input id="chat" autocomplete="off" placeholder="Write to ${esc(p.name)}"><button class="btn primary" type="submit">Send</button></form>`;
+  } else if(st.k === 'incoming'){
+    tail = `<p class="muted">Write back with a letter of your own and the conversation opens.</p>
+      <label for="letter" class="note">Your letter</label>
+      <textarea id="letter" class="paper" placeholder="Dear ${esc(p.name)},">${esc(S.draft || '')}</textarea>
+      <span class="counter" id="counter"></span>
+      <button class="btn primary" id="send" data-act="reply" data-id="${t.id}" disabled>Send letter</button>`;
+  } else {
+    tail = `<p class="muted" style="text-align:center">Your letter is waiting for ${esc(p.name)}. They’ll find it with their own introductions.</p>`;
+  }
+  return `<div class="stack">
+    <button class="back" data-act="tab" data-id="letters">‹ Letters</button>
+    <div class="card-head">${avatar(p,56)}<div class="who"><h2>${esc(p.name)}, ${p.age}</h2><span class="where">${esc(p.where)}</span>${badge(p)}</div></div>
+    ${letters}${tail}
+  </div>`;
+}
+
+function viewGather(){
+  const list = GATHERINGS.map(g => {
+    const on = S.going.includes(g.id);
+    return `<article class="gather"><div class="date"><span class="m">${g.m}</span><span class="d">${g.d}</span></div>
+      <div class="info"><h2 style="font-size:19px">${esc(g.title)}</h2><span class="meta">${esc(g.when)} · ${esc(g.where)}</span><p style="font-size:15px">${esc(g.blurb)}</p>
+      <span class="meta">${g.count + (on?1:0)} members going</span>
+      <button class="going" aria-pressed="${on}" data-act="going" data-id="${g.id}">${on ? '✓ I’ll be there' : 'I’ll be there'}</button></div></article>`;
+  }).join('');
+  return `<div class="stack">
+    <section class="week-head"><p class="eyebrow">Gatherings</p><h1>Meet by firelight</h1><p class="muted">Festivals, farm days and small hosted evenings where members meet in person. These are sample gatherings.</p></section>
+    ${list}
+  </div>`;
+}
+
+function viewMe(){
+  const m = S.me;
+  const chips = Object.entries(CIRCLES).map(([k,c]) => `<button class="chip" aria-pressed="${S.circles.includes(k)}" data-act="circle" data-id="${k}">${c.label}</button>`).join('');
+  const sw = (key, title, sub) => `<div class="toggle"><span><b>${title}</b><small>${sub}</small></span><button class="switch" role="switch" aria-checked="${!!m[key]}" aria-label="${title}" data-act="switch" data-id="${key}"></button></div>`;
+  const f = (key, label, ph, area) => `<div class="field"><label for="f-${key}">${label}</label>${area ? `<textarea id="f-${key}" data-me="${key}" rows="4" placeholder="${esc(ph)}">${esc(m[key])}</textarea>` : `<input id="f-${key}" data-me="${key}" placeholder="${esc(ph)}" value="${esc(m[key])}">`}</div>`;
+  return `<div class="stack">
+    <section class="week-head"><p class="eyebrow">My story</p><h1>How others will meet you</h1><p class="muted">No wall of selfies. A few true things, and something you made.</p></section>
+    ${f('name','First name','Michael')}
+    <div class="field"><span class="lbl">I’m here for</span><div class="chips">${HERE.map(h => `<button class="chip" aria-pressed="${myHere()===h}" data-act="here" data-id="${h}">${h}</button>`).join('')}</div><span class="note">Shown on your profile, so everyone knows where you stand.</span></div>
+    <div class="field"><span class="lbl">My circles</span><div class="chips">${chips}</div><span class="note">Circles are badges on your profile. They never limit who you meet or who meets you. Alum and parent badges are confirmed by another verified member.</span></div>
+    ${f('story','My story','Where you grew up, what you’re tending now, what you’re hoping for.',true)}
+    ${f('festival','The festival I love most','Michaelmas, Martinmas, the lantern walk, the Advent spiral…')}
+    ${f('hands','What my hands like to make','Bread, furniture, music, a garden…')}
+    ${f('saturday','A Saturday morning','Describe one.')}
+    <div class="field"><label for="f-seeking">I’d like to meet</label><select id="f-seeking" data-me="seeking">${['Women','Men','Everyone'].map(o => `<option ${m.seeking===o?'selected':''}>${o}</option>`).join('')}</select></div>
+    <div>
+      ${sw('hideSchool','Hide me from my own school','People tied to your school community won’t see your profile.')}
+    </div>
+    <p class="note">To keep everyone safe, photos never show children.</p>
+    <button class="btn primary" data-act="save-me">Save my story</button>
+    <button class="btn quiet" data-act="replay">Replay the welcome</button>
+  </div>`;
+}
+
+function viewOnboard(){
+  const step = S.onboard;
+  const dots = `<div class="steps">${[0,1,2,3].map(i => `<i class="${i===step?'on':''}"></i>`).join('')}</div>`;
+  let body, foot;
+  if(step === 0){
+    body = `${LANTERN_SVG}<div class="title">Lantern</div><p class="lead">Each of us carries a little light.<br>Find the ones who walk beside you.</p><p class="muted" style="text-align:center">A slow dating community inspired by Waldorf education, for alumni, parents and kindred spirits.</p>`;
+    foot = `<button class="btn primary" data-act="ob-next">Begin</button>`;
+  } else if(step === 1){
+    body = `<h1>Which circle are you in?</h1><p class="muted">Choose any that fit. Your circle shows as a badge on your profile. It never divides who you meet: everyone gathers at the same fire.</p>
+      ${Object.entries(CIRCLES).map(([k,c]) => `<button class="option" aria-pressed="${S.circles.includes(k)}" data-act="circle" data-id="${k}"><b>${c.label}</b><span class="muted">${c.desc}</span></button>`).join('')}`;
+    foot = `<button class="btn primary" data-act="ob-next" ${S.circles.length ? '' : 'disabled'}>Continue</button>`;
+  } else if(step === 2){
+    const desc = {'Dating':'Looking for a partner.','Dating and friendship':'Open to love, glad for friends.','Friends only':'Here for friendship and community. No dating.'};
+    body = `<h1>What are you here for?</h1><p class="muted">It shows on your profile, so no one has to guess. You can change it any time.</p>
+      ${HERE.map(h => `<button class="option" aria-pressed="${myHere()===h}" data-act="here" data-id="${h}"><b>${h}</b><span class="muted">${desc[h]}</span></button>`).join('')}`;
+    foot = `<button class="btn primary" data-act="ob-next">Continue</button>`;
+  } else {
+    body = `<h1>How Lantern works</h1>
+      <div class="how"><span class="n">1</span><span><b>A few introductions, once a week.</b><br><span class="muted">They arrive Sunday evening. No endless swiping.</span></span></div>
+      <div class="how"><span class="n">2</span><span><b>Letters before chat.</b><br><span class="muted">Each of you writes one real letter. Then the conversation opens.</span></span></div>
+      <div class="how"><span class="n">3</span><span><b>Gatherings in person.</b><br><span class="muted">Lantern walks, festivals, bread afternoons. Meet where the community already meets.</span></span></div>`;
+    foot = `<button class="btn primary" data-act="ob-done">Light my lantern</button>`;
+  }
+  return `<div class="onboard" role="dialog" aria-label="Welcome to Lantern">${dots}<div class="body">${body}</div><div class="foot">${foot}${step<3?'<button class="btn quiet" data-act="ob-done">Skip</button>':''}</div></div>`;
+}
+
+/* ---------- render ---------- */
+const TABS = [
+  {id:'week', label:'This week', icon:'<path d="M12 3v2M7 6h10l2 3v9l-3 3H8l-3-3V9z"/><ellipse cx="12" cy="13" rx="2.2" ry="3"/>'},
+  {id:'letters', label:'Letters', icon:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 6.5 8.5 6.5 8.5-6.5"/>'},
+  {id:'gather', label:'Gatherings', icon:'<path d="M12 3c2 3 4 4.5 4 8a4 4 0 0 1-8 0c0-2 1-3 1.5-4 .5 1.5 1.5 2 2.5 2-1-2-.5-4 0-6z"/><path d="M5 21h14"/>'},
+  {id:'me', label:'My story', icon:'<circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4.5-6 8-6s7 2 8 6"/>'}
+];
+const TAB_OF = {week:'week', profile:'week', compose:'week', letters:'letters', thread:'letters', gather:'gather', me:'me'};
+
+function render(){
+  const main = document.getElementById('main');
+  const v = {week:viewWeek, profile:viewProfile, compose:viewCompose, letters:viewLetters, thread:viewThread, gather:viewGather, me:viewMe}[S.view];
+  main.innerHTML = v();
+  const unread = threads.some(t => status(t).k === 'incoming');
+  document.getElementById('tabs').innerHTML = TABS.map(t => `<button data-act="tab" data-id="${t.id}" ${TAB_OF[S.view]===t.id?'aria-current="page"':''}><svg viewBox="0 0 24 24" aria-hidden="true">${t.icon}</svg>${t.label}${t.id==='letters'&&unread?'<span class="dot" aria-label="new letter"></span>':''}</button>`).join('');
+  const old = document.querySelector('.onboard'); if(old) old.remove();
+  if(!S.onboarded) document.getElementById('app').insertAdjacentHTML('beforeend', viewOnboard());
+  updateCounter();
+  const cf = document.getElementById('chatform');
+  if(cf) cf.addEventListener('submit', e => {
+    e.preventDefault(); const inp = document.getElementById('chat'); const txt = inp.value.trim(); if(!txt) return;
+    threads.find(x => x.id === S.tid).chat.push({from:'me', text:txt}); save(); render();
+    const i2 = document.getElementById('chat'); if(i2) i2.focus(); main.scrollTop = main.scrollHeight;
+  });
+}
+function go(view, extra){ Object.assign(S, {view}, extra || {}); render(); document.getElementById('main').scrollTop = 0; }
+
+const MIN = 150;
+function updateCounter(){
+  const ta = document.getElementById('letter'), c = document.getElementById('counter'), b = document.getElementById('send');
+  if(!ta || !c) return;
+  const n = ta.value.trim().length;
+  c.textContent = n >= MIN ? `${n} characters. Ready to send.` : `${MIN - n} more characters to send. A few honest sentences is plenty.`;
+  c.classList.toggle('ok', n >= MIN); b.disabled = n < MIN;
+}
+
+const ACT = {
+  tab: id => { S.draft = ''; go(id); },
+  open: id => go('profile', {pid:id}),
+  compose: id => go('compose', {pid:id}),
+  pass: id => { S.passed.push(id); save(); go('week'); toast(`You let ${PEOPLE[id].name} pass. They won’t be shown again.`); },
+  send: id => {
+    const txt = document.getElementById('letter').value.trim();
+    threads.unshift({id:'t-'+id, pid:id, letters:[{from:'me', text:txt}], chat:[]});
+    S.draft = ''; save(); go('letters'); toast(`Letter sent. ${PEOPLE[id].name} will find it with their own introductions.`);
+  },
+  reply: tid => {
+    const t = threads.find(x => x.id === tid); t.letters.push({from:'me', text:document.getElementById('letter').value.trim()});
+    S.draft = ''; save(); go('thread', {tid}); toast('Your letters crossed. You can talk freely now.');
+  },
+  thread: id => go('thread', {tid:id}),
+  going: id => { const i = S.going.indexOf(id); i >= 0 ? S.going.splice(i,1) : S.going.push(id); save(); render(); },
+  circle: id => { const i = S.circles.indexOf(id); i >= 0 ? S.circles.splice(i,1) : S.circles.push(id); save(); render(); },
+  here: id => { S.me.here = id; save(); render(); },
+  'switch': id => { S.me[id] = !S.me[id]; save(); render(); },
+  'save-me': () => { save(); toast('Saved on this device.'); },
+  replay: () => { S.onboarded = false; S.onboard = 0; render(); },
+  'reset-week': () => { S.passed = []; threads = threads.filter(t => !WEEK.includes(t.pid)); save(); render(); },
+  'ob-next': () => { S.onboard++; render(); },
+  'ob-done': () => { S.onboarded = true; S.onboard = 0; save(); go('week'); }
+};
+
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-act]'); if(!t || t.disabled) return;
+  const fn = ACT[t.dataset.act]; if(fn) fn(t.dataset.id, t);
+});
+document.addEventListener('input', e => {
+  if(e.target.id === 'letter'){ S.draft = e.target.value; updateCounter(); }
+  if(e.target.dataset.me){ S.me[e.target.dataset.me] = e.target.value; }
+});
+document.addEventListener('change', e => { if(e.target.dataset.me){ S.me[e.target.dataset.me] = e.target.value; save(); } });
+setInterval(() => { if(S.view === 'week' && S.onboarded){ const b = document.querySelector('.countdown b'); if(b) b.textContent = countdown(); } }, 30000);
+
+load(); render();
+</script>
+</body>
+</html>
